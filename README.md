@@ -45,7 +45,12 @@ The **address** and **port** the Chromium dev tools are listening on. localhost 
 ## Execution
 
 ```shell
-./dashboard-client -conf config.toml
+% ./dashboard-client -help
+Usage of ./dashboard-client:
+-conf string
+Config file chromium, Consul, delay interval.
+
+% ./dashboard-client -conf config.toml
 ```
 
 ## Starting Chromium
@@ -59,7 +64,7 @@ trap "rm -rf ${CHROME_DATA_DIR}" SIGINT SIGTERM EXIT
 /usr/bin/chromium --remote-debugging-port=9222 --user-data-dir="${CHROME_DATA_DIR}" --disable-infobars --kiosk "about:blank"
 
 # to test without it chromium going full screen
-/usr/bin/chromium --remote-debugging-port=9222 --user-data-dir="${CHROME_DATA_DIR}"
+#/usr/bin/chromium --remote-debugging-port=9222 --user-data-dir="${CHROME_DATA_DIR}"
 ```
 
 ## References
@@ -142,4 +147,23 @@ It should not be necessary to have to send the open command but if the page does
 
 ```shell
 ./consul kv put foo/action reload
+```
+
+### Client Test Output
+
+```shell
+% ./dashboard-client -conf config.toml
+2020/01/04 11:04:52 Chrome Connection:  localhost:9222
+2020/01/04 11:04:52 Consul Address:  localhost:8500
+2020/01/04 11:04:52 Consul Scheme:  http
+2020/01/04 11:04:52 Consul Datacenter:  datacenter1
+2020/01/04 11:04:52 Consul Action Path:  foo/action
+2020/01/04 11:04:52 Consul URL Path:  foo/url
+2020/01/04 11:04:52 Loop Dela:  1s
+2020/01/04 11:04:52 Open URL:  https://osu.edu
+2020/01/04 11:04:52 Requested to open https://osu.edu
+2020/01/04 11:05:08 Reload browser
+2020/01/04 11:05:08 Reloading browser page
+2020/01/04 11:05:20 Open URL:  https://github.com
+2020/01/04 11:05:20 Requested to open https://github.com
 ```
