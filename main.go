@@ -1,72 +1,93 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"strings"
 	"time"
 
+	"github.com/BurntSushi/toml"
 	"github.com/hashicorp/consul/api"
 )
+
+var configFile *string
+var appConfig tomlConfig
+
+type tomlConfig struct {
+	Chrome chromeconfig `toml:"chrome"`
+	Consul consulconfig `toml:"consul"`
+	Delay  delayconfig  `tomle:"delay"`
+}
+
+type chromeconfig struct {
+	Host string
+	Port int
+}
+
+type consulconfig struct {
+	Address    string
+	Scheme     string
+	Datacenter string
+	Action     string
+	URL        string
+}
+
+type delayconfig struct {
+	Interval time.Duration
+}
 
 // hold onto the currently running URL
 var runningURL string
 
-var actionPath = "foo/action"
-var urlPath = "foo/url"
-var delay time.Duration = 1000
+// ChromeConnString holds the chrome address and port
+// it is used in browser.go
+var ChromeConnString string
 
-func readConsulPath(c chan []byte, kv *api.KV) {
+// =============================
 
-	actionExists, _, err := kv.Keys(actionPath, "/", nil)
-	if err != nil {
-		log.Print("Error getting Keys from Consul", err)
+func init() {
+	configFile = flag.String("conf", "", "Config file chromium, Consul, delay interval.")
+
+	flag.Parse()
+
+	if _, err := toml.DecodeFile(*configFile, &appConfig); err != nil {
+		log.Fatal(err)
 	}
 
-	urlExists, _, err := kv.Keys(urlPath, "/", nil)
-	if err != nil {
-		log.Print("Error getting Keys from Consul", err)
-	}
+	ChromeConnString = fmt.Sprintf("%s:%d", appConfig.Chrome.Host, appConfig.Chrome.Port)
 
-	if len(actionExists) > 0 && len(urlExists) > 0 {
-
-		action, _, err := kv.Get(actionPath, nil)
-		if err != nil {
-			log.Print("Error getting action from Consul", err)
-		}
-
-		url, _, err := kv.Get(urlPath, nil)
-		if err != nil {
-			log.Print("Error getting url from Consul", err)
-		}
-
-		returnString := fmt.Sprintf("%s,%s", action.Value, url.Value)
-		returnByte := []byte(returnString)
-
-		c <- returnByte
-	}
+	log.Println("Chrome Connection: ", ChromeConnString)
+	log.Println("Consul Address: ", appConfig.Consul.Address)
+	log.Println("Consul Scheme: ", appConfig.Consul.Scheme)
+	log.Println("Consul Datacenter: ", appConfig.Consul.Datacenter)
+	log.Println("Consul Action Path: ", appConfig.Consul.Action)
+	log.Println("Consul URL Path: ", appConfig.Consul.URL)
+	log.Println("Loop Delay: ", appConfig.Delay.Interval*time.Millisecond)
 }
 
 func main() {
 
-	config := api.DefaultConfig()
-	config.Address = "127.0.0.1:8500"
-	config.Scheme = "http"
-	config.Datacenter = "datacenter1"
+	consulConfig := api.DefaultConfig()
+	consulConfig.Address = appConfig.Consul.Address
+	consulConfig.Scheme = appConfig.Consul.Scheme
+	consulConfig.Datacenter = appConfig.Consul.Datacenter
 
-	client, err := api.NewClient(config)
+	client, err := api.NewClient(consulConfig)
 	if err != nil {
-		log.Print("Error creating client", err)
+		log.Print("Error creating consul client", err)
 	}
 
 	kv := client.KV()
 
+	// using []byte because that is the format
+	// the data is stored on Consul
 	c := make(chan []byte)
 
 	for {
-		time.Sleep(delay * time.Millisecond)
-		go readConsulPath(c, kv)
+		go ReadConsulPath(c, kv)
 		chanValue := <-c
+
 		s := strings.Split(string(chanValue), ",")
 
 		action, url := s[0], s[1]
@@ -75,24 +96,17 @@ func main() {
 		case "open":
 			if runningURL != url {
 				log.Println("Open URL: ", url)
-				// chromium open call happens here
-
-				// save the new URL to the global var
+				OpenURLInBrowser(url)
 				runningURL = url
 			}
 		case "reload":
 			log.Println("Reload browser")
-			// chromium reload call happens here
-
-			// once the reload happens swich the action to open
-			// so that we don't stay in this loop
-			p := &api.KVPair{Key: "foo/action", Value: []byte("open")}
-			_, err = kv.Put(p, nil)
-			if err != nil {
-				log.Println(err)
-			}
+			ReloadBrowser()
+			WriteConsulPath(kv)
 		default:
 			//log.Println("switch default")
 		}
+
+		time.Sleep(appConfig.Delay.Interval * time.Millisecond)
 	}
 }

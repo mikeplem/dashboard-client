@@ -1,0 +1,13 @@
+[chrome]
+host = "localhost"
+port = 9222
+
+[consul]
+address = "localhost:8500"
+scheme = "http"
+datacenter = "datacenter1"
+action = "foo/action"
+url = "foo/url"
+
+[delay]
+interval = 1000
