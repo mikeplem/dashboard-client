@@ -1,6 +1,6 @@
 # Dashboard Client
 
-The idea of this repo is to be a redesign of the remotechrome code. Each TV will run Consul which will connect to the admin server as well as this applicaiton. This app watches paths in Consul and if they change it will call Chromium dev tools to either open a URL or reload the browser.
+The idea of this repo is to be a redesign of the remotechrome code. Each TV will run Consul which will connect to the admin server as well as this application. This app watches paths in Consul and if they change it will call Chromium dev tools to either open a URL or reload the browser.
 
 Previously, I thought about using confd to watch Consul and then have confd execute a script but I realized that this app could do the same work with less moving parts.
 
@@ -28,7 +28,7 @@ The **address** and **port** the Chromium dev tools are listening on. localhost 
 
 ### Config Section - Consul
 
-**address** is the addres and port of the local Consul server.
+**address** is the address and port of the local Consul server.
 
 **scheme** is the http protocol used to talk to the Consul server. Since it is only talking to the localhost, http is being used.
 
@@ -159,7 +159,7 @@ It should not be necessary to have to send the open command but if the page does
 2020/01/04 11:04:52 Consul Datacenter:  datacenter1
 2020/01/04 11:04:52 Consul Action Path:  foo/action
 2020/01/04 11:04:52 Consul URL Path:  foo/url
-2020/01/04 11:04:52 Loop Dela:  1s
+2020/01/04 11:04:52 Loop Delay:  1s
 2020/01/04 11:04:52 Open URL:  https://osu.edu
 2020/01/04 11:04:52 Requested to open https://osu.edu
 2020/01/04 11:05:08 Reload browser
