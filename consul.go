@@ -9,16 +9,16 @@ import (
 
 // ReadConsulPath will look for values at specific paths
 // and return them via a channel
-func ReadConsulPath(c chan []byte, kv *api.KV) {
+func ReadConsulPath(c chan []byte, kv *api.KV, urlPath string) {
 
 	actionExists, _, err := kv.Keys(appConfig.Consul.Action, "/", nil)
 	if err != nil {
 		log.Print("Error finding action key from Consul", err)
 	}
 
-	urlExists, _, err := kv.Keys(appConfig.Consul.URL, "/", nil)
+	urlExists, _, err := kv.Keys(urlPath, "/", nil)
 	if err != nil {
-		log.Print("Error finding url key from Consul", err)
+		log.Print("Error finding urlPath key from Consul", err)
 	}
 
 	if len(actionExists) > 0 && len(urlExists) > 0 {
@@ -28,9 +28,9 @@ func ReadConsulPath(c chan []byte, kv *api.KV) {
 			log.Print("Error getting action value from Consul", err)
 		}
 
-		url, _, err := kv.Get(appConfig.Consul.URL, nil)
+		url, _, err := kv.Get(urlPath, nil)
 		if err != nil {
-			log.Print("Error getting url value from Consul", err)
+			log.Print("Error getting urlPath value from Consul", err)
 		}
 
 		returnString := fmt.Sprintf("%s,%s", action.Value, url.Value)
@@ -40,12 +40,10 @@ func ReadConsulPath(c chan []byte, kv *api.KV) {
 	}
 }
 
-// WriteConsulPath writes the value open to the action path
-// this is so the for loop in main does not continue trying
-// to reload the browser
-func WriteConsulPath(kv *api.KV) {
+// WriteConsulPath writes 'value' to the Consul 'path'
+func WriteConsulPath(kv *api.KV, path string, value string) {
 
-	p := &api.KVPair{Key: appConfig.Consul.Action, Value: []byte("open")}
+	p := &api.KVPair{Key: path, Value: []byte(value)}
 	_, err := kv.Put(p, nil)
 	if err != nil {
 		log.Println(err)

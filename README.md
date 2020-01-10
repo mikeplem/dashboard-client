@@ -16,7 +16,8 @@ address = "localhost:8500"
 scheme = "http"
 datacenter = "datacenter1"
 action = "foo/action"
-url = "foo/url"
+newurl = "foo/url"
+runningurl = "foo/current"
 
 [delay]
 interval = 1000
@@ -34,9 +35,11 @@ The **address** and **port** the Chromium dev tools are listening on. localhost 
 
 **datacenter** is the Consul configured datacenter
 
-**action** is the path the TV will watch for action commands. If the TV were called **tv1** the path would be **tv1/action**. The TV name is where the dashboard-admin will write the action. At the moment the only valid actions are **open** and **reload**
+**action** is the path the application will watch for action commands. If the application were called **tv1** the path would be **tv1/action**. The TV name is where the dashboard-admin will write the action. At the moment the only valid actions are **open** and **reload**
 
-**url** is the path the TV will watch for what URL to open in the browser. If the TV were called **tv1** the path would be **tv1/url**. The application keeps the currently running URL stored in **runningURL** and with compare the value stored in **tv1/url** to **runningURL** if they match the URL will not be loaded. If they do not match the URL will be opened in the browser.
+**newurl** is the path the application will watch for what URL to open in the browser. If the application were called **tv1** the path would be **tv1/url**. The application keeps the currently running URL stored in **runningURL** and with compare the value stored in **tv1/url** to **runningURL** if they match the URL will not be loaded. If they do not match the URL will be opened in the browser.
+
+**runningurl** is the path the application will write the currently running URL. It is possible that the new URL and the running URL could be different. A future plan is to setup a temp URL path so that a URL would be shown for some short amount of time and after that time the value of runningurl could be used to reopen the normal path the TV should show.
 
 ### Config Section - Delay
 
